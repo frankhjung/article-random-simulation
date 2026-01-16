@@ -1,0 +1,28 @@
+name: render and publish article
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: render markdown to html
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: shallow checkout
+        uses: actions/checkout@v4
+        with:
+          ref: refs/heads/main
+          fetch-depth: 1
+
+      - name: publish to pages
+        uses: crazy-max/ghaction-github-pages@v4
+        if: success()
+        with:
+          build_dir: public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

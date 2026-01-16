@@ -1,0 +1,116 @@
+---
+title: 'Simulation'
+author: '[frankhjung@linux.com](mailto:frankhjung@linux.com)'
+date: '`r format(Sys.time(), format="%d %b %Y")`'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+## Simulation in Economics
+
+Consider a game where players start with an equal pot of $100. The game
+consists of tossing a fair coin. If you call out the face of the coin you win
+and receive a 20% gain to whatever is in your pot. Alternatively, if you lose,
+then you pay 17% from your pot.
+
+The odds in this fair game are the same for wins or loses, which is `0.5`. This
+will give an expected gain for such a game as:
+
+```{r economics_expected_gain}
+expected_gain <- 0.5 * (+20) + 0.5 * (-17)
+expected_gain
+```
+
+But, what if you played 10 games? Each time you win the pot grows by 20% which
+is multiplying factor or `1+ 20/100 = 1.2`. When you lose the ante drops by
+17%, which is a multiplying factor of `1 - 17/100 = 0.83`. After five wins and
+five losses in any order the amount remaining in the pot is:
+
+```{r economics_game}
+wins <- rep(1.2,5)
+losses <- rep(0.83,5)
+# games = wins^5 * losses^5
+games <- sample(c(wins,losses), replace = FALSE)
+games
+remaining <- Reduce("*", games)
+remaining
+```
+
+So, you would have lost about $2 after an equal number of wins or losses.
+
+<!-- ## Simulation of Airline Bookings -->
+
+The following is a reproduction of a simulation from [Every Data Scientist
+needs to read these Simulation stories by Preetika
+Srivastava](https://towardsdatascience.com/every-data-scientist-needs-to-read-these-simulation-stories-7be0531e782f).
+
+The problem is:
+
+> Airlines continually face the problem of customers with booked tickets not
+> showing up for the flight. To reduce financial loss, they tend to overbook
+> their flights with a few extra tickets. For instance, there are 50 seats in
+> the aircraft. On average, 10% of the people who buy tickets don't show up.
+> Each ticket price is $100. Due to overbooking, if a last-minute passenger can
+> not get on the plane then they are paid $250 as compensation. Then the
+> question is: _How many seats should be overbooked to maximize the expected
+> revenue?_
+
+The solution written in [GNU R](https://www.r-project.org/) is given below:
+
+```{r bookings}
+iterations <- 100000          # number of iterations to run simulation
+prob_no_show <- 0.1           # probability of people not showing up
+seats <- seq(51, 60 ,1)       # 10 different values of extra number of seats to be booked
+
+# calculate seat profit
+seat_profit <- function(prob, seat) {
+  success <- mean(rbinom(iterations, seat, (1 - prob)))
+  revenue <- 100 * seat
+  cost <-  (success - 50) * 250
+  ifelse(cost > 0, revenue - cost, revenue)
+}
+
+# success is the numbers of seats being filled out of seats booked
+# using binomial distribution to quantify the probability of success
+# defining success as the average 'success' when it is observed 10000 times
+profits <- sapply(seats, seat_profit, prob = prob_no_show)
+
+df <- data.frame(seats, profits)
+```
+
+Which can be plotted as profit versus seats booked:
+
+```{r plot, echo=FALSE, message=FALSE, warning=FALSE}
+# plotting profits vs seats
+# maxima will give the optimum number of seats to be overbooked
+qp <- qplot(
+            x = seats,
+            y = profits,
+            data = df,
+            xlab = "Seats Booked",
+            ylab = "Profit (AUD)",
+            geom = c("point", "smooth"))
+# show plot
+qp
+```
+
+Now find the optimal seat overbooking which maximises profits:
+
+```{r estimate, echo=TRUE, message=TRUE, warning=FALSE}
+# use plot builder to estimate seat allocation to maximise profits
+gb <- ggplot_build(qp)
+# find seat (integer) where curve is inflected (seat are zero indexed )
+x_est_max <- gb$data[[1]]$x[which(diff(sign(diff(gb$data[[1]]$y))) == -2) + 1]
+# see point of curve inflection using:
+# diff(sign(diff(gb$data[[1]]$y)))
+# curve has slope or either -1, +1 (or possibly 0)
+```
+
+The optimal number of seats to be booked to maximize the expected profit can be
+read from the plot as, ```r x_est_max```.
