@@ -1,6 +1,6 @@
 ---
 title: 'Simulation'
-author: '[frankhjung@linux.com](mailto:frankhjung@linux.com)'
+author: '[Frank Jung](https://www.linkedin.com/in/frankjung/)'
 date: '`r format(Sys.time(), format="%d %b %Y")`'
 output:
   html_document: default

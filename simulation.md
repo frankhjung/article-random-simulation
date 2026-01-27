@@ -1,6 +1,6 @@
 ---
 title: 'Thoughts on Random Number Generators - Simulation'
-author: '[frankhjung@linux.com](mailto:frankhjung@linux.com)'
+author: '[Frank Jung](https://www.linkedin.com/in/frankjung/)'
 geometry: margin=25mm
 header-includes:
   - \usepackage{fancyhdr}
